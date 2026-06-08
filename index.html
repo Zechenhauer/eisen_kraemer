@@ -78,7 +78,7 @@
                     })
                     .map(row => `
                         <div class="bg-gray-800 p-3 rounded-xl flex justify-between text-sm border border-gray-700">
-                            <span class="text-gray-400">${row.datum ? new Date(row.datum).toLocaleDateString('de-DE', {timeZone: 'UTC'}) : ''}</span>
+                            <span class="text-gray-400">${row.datum ? row.datum.split('T')[0].split('-').reverse().join('.') : ''}</span>
                             <span class="font-bold">${row.stunden || ''}</span>
                             <span class="text-yellow-500">${row.km} KM</span>
                         </div>
