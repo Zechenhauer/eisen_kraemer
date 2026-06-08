@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stunden-App Eisen Krämer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="p-4 max-w-sm mx-auto bg-gray-900 text-white">
+    <h1 class="text-xl font-bold mb-6 text-yellow-500">Eisen Krämer Erfassung</h1>
+    
+    <div class="space-y-4">
+        <input type="date" id="datum" class="w-full bg-gray-800 p-3 rounded-lg">
+        <div class="flex gap-2">
+            <input type="time" id="beginn" class="w-full bg-gray-800 p-3 rounded-lg" placeholder="Beginn">
+            <input type="time" id="ende" class="w-full bg-gray-800 p-3 rounded-lg" placeholder="Ende">
+        </div>
+        <input type="text" id="kennzeichen" placeholder="Kennzeichen (EK...)" class="w-full bg-gray-800 p-3 rounded-lg">
+        <input type="number" id="km" placeholder="Gefahrene KM" class="w-full bg-gray-800 p-3 rounded-lg">
+        
+        <button onclick="sendData()" class="w-full bg-yellow-500 text-black font-bold p-4 rounded-lg">Speichern</button>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "DEINE_NEUE_APPS_SCRIPT_URL";
+
+        // Setzt Datum automatisch auf heute
+        document.getElementById('datum').valueAsDate = new Date();
+
+        async function sendData() {
+            const data = {
+                datum: document.getElementById('datum').value,
+                beginn: document.getElementById('beginn').value,
+                ende: document.getElementById('ende').value,
+                kennzeichen: document.getElementById('kennzeichen').value,
+                km: document.getElementById('km').value
+            };
+
+            try {
+                await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
+                alert("Gespeichert!");
+            } catch (e) {
+                alert("Fehler!");
+            }
+        }
+    </script>
+</body>
+</html>
