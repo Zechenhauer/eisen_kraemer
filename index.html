@@ -12,32 +12,41 @@
     <div class="space-y-3 mb-8 bg-gray-800 p-4 rounded-2xl border border-gray-700">
         <input type="date" id="datum" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
         <div class="flex gap-2">
-            <input type="time" id="beginn" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700" placeholder="Beginn">
-            <input type="time" id="ende" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700" placeholder="Ende">
+            <input type="time" id="beginn" oninput="berechneStunden()" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
+            <input type="time" id="ende" oninput="berechneStunden()" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
         </div>
+        <!-- Anzeige für Stunden -->
+        <div id="stunden-anzeige" class="text-center font-bold text-yellow-500 py-2 text-lg">0,0 Std.</div>
+        
         <input type="text" id="kennzeichen" placeholder="Kennzeichen" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
         <input type="number" id="km" placeholder="KM gefahren" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
         <button onclick="saveData()" class="w-full bg-yellow-500 text-black font-bold p-4 rounded-xl hover:bg-yellow-400 transition-all">Speichern</button>
     </div>
 
     <h2 class="text-sm font-bold text-gray-500 uppercase mb-3">Historie</h2>
-    <div id="list-container" class="space-y-2">
-        <p class="text-gray-600 italic">Lade Einträge...</p>
-    </div>
+    <div id="list-container" class="space-y-2"></div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbySiYby3yUkQoF8R8MfF2s9lZr4hkLWXuq5nmAxJX1PqMsAm0VukDZcRorM0qmORtJw/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDx7aIKNfdEaQzr6HJD7TLoEowE8NpCe7KQVd5VqYe6lhLr3lL1UfrrVTZ5QrKDDXPgg/exec"; // <-- HIER DEINE URL EINTRAGEN
 
         document.getElementById('datum').valueAsDate = new Date();
+
+        function berechneStunden() {
+            const b = document.getElementById('beginn').value;
+            const e = document.getElementById('ende').value;
+            if (b && e) {
+                const diff = (new Date("1970-01-01T" + e + "Z") - new Date("1970-01-01T" + b + "Z")) / 3600000;
+                document.getElementById('stunden-anzeige').innerText = (diff >= 0 ? diff.toFixed(1).replace('.', ',') : "0,0") + " Std.";
+            }
+        }
 
         async function loadEntries() {
             let res = await fetch(WEB_APP_URL);
             let data = await res.json();
-            const container = document.getElementById("list-container");
-            container.innerHTML = data.reverse().map(row => `
+            document.getElementById("list-container").innerHTML = data.reverse().map(row => `
                 <div class="bg-gray-800 p-3 rounded-xl flex justify-between text-sm border border-gray-700">
                     <span class="text-gray-400">${row.datum.split('T')[0]}</span>
-                    <span class="font-bold text-white">${row.kennzeichen}</span>
+                    <span class="font-bold">${row.stunden || ''} Std.</span>
                     <span class="text-yellow-500">${row.km} KM</span>
                 </div>
             `).join('');
@@ -49,7 +58,8 @@
                 beginn: document.getElementById('beginn').value,
                 ende: document.getElementById('ende').value,
                 kennzeichen: document.getElementById('kennzeichen').value,
-                km: document.getElementById('km').value
+                km: document.getElementById('km').value,
+                stunden: document.getElementById('stunden-anzeige').innerText
             };
             await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
             alert("Erfolgreich gespeichert!");
