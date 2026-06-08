@@ -16,7 +16,6 @@
             <input type="time" id="ende" oninput="berechneStunden()" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
         </div>
         
-        <!-- Dauerhaft sichtbares Stundenfeld -->
         <div id="stunden-anzeige" class="text-center font-bold text-yellow-500 py-3 text-2xl border-t border-b border-gray-700 my-2">
             0,0 Std.
         </div>
@@ -27,13 +26,26 @@
     </div>
 
     <h2 class="text-sm font-bold text-gray-500 uppercase mb-3">Historie</h2>
+    
+    <!-- Monats-Auswahl -->
+    <select id="monats-filter" onchange="loadEntries()" class="w-full bg-gray-800 p-3 rounded-xl text-white mb-4 border border-gray-700 font-bold">
+        <option value="2026-05">Mai 2026</option>
+        <option value="2026-06">Juni 2026</option>
+        <option value="2026-07">Juli 2026</option>
+    </select>
+
     <div id="list-container" class="space-y-2"></div>
 
     <script>
-        // Deine Web-App-URL ist hier korrekt hinterlegt
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzdu1Ku2O0lX_9aidyWB5EfXK_nyUvd5WYAGQAlr0UoZK7c5xL0-S-nSKT1Ist14H198A/exec";
 
+        // Initialisierung
         document.getElementById('datum').valueAsDate = new Date();
+        
+        // Aktuellen Monat im Dropdown vorauswählen
+        const now = new Date();
+        const currentMonthString = now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2);
+        document.getElementById('monats-filter').value = currentMonthString;
 
         function berechneStunden() {
             const b = document.getElementById('beginn').value;
@@ -52,13 +64,22 @@
             try {
                 let res = await fetch(WEB_APP_URL);
                 let data = await res.json();
-                document.getElementById("list-container").innerHTML = data.reverse().map(row => `
-                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between text-sm border border-gray-700">
-                        <span class="text-gray-400">${row.datum ? row.datum.split('T')[0] : ''}</span>
-                        <span class="font-bold">${row.stunden || ''}</span>
-                        <span class="text-yellow-500">${row.km} KM</span>
-                    </div>
-                `).join('');
+                const filterWert = document.getElementById("monats-filter").value;
+
+                document.getElementById("list-container").innerHTML = data.reverse()
+                    .filter(row => {
+                        if (!row.datum) return false;
+                        const d = new Date(row.datum);
+                        const monatString = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
+                        return monatString === filterWert;
+                    })
+                    .map(row => `
+                        <div class="bg-gray-800 p-3 rounded-xl flex justify-between text-sm border border-gray-700">
+                            <span class="text-gray-400">${row.datum ? row.datum.split('T')[0] : ''}</span>
+                            <span class="font-bold">${row.stunden || ''}</span>
+                            <span class="text-yellow-500">${row.km} KM</span>
+                        </div>
+                    `).join('');
             } catch (e) {
                 console.error("Fehler beim Laden:", e);
             }
