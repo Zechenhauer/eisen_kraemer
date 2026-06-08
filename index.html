@@ -3,31 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stunden-App Eisen Krämer</title>
+    <title>Eisen Krämer App</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="p-4 max-w-sm mx-auto bg-gray-900 text-white">
-    <h1 class="text-xl font-bold mb-6 text-yellow-500">Eisen Krämer Erfassung</h1>
+<body class="p-4 max-w-sm mx-auto bg-gray-900 text-white min-h-screen">
+    <h1 class="text-xl font-bold mb-6 text-yellow-500 uppercase tracking-wider text-center">Eisen Krämer</h1>
     
-    <div class="space-y-4">
-        <input type="date" id="datum" class="w-full bg-gray-800 p-3 rounded-lg">
+    <div class="space-y-3 mb-8 bg-gray-800 p-4 rounded-2xl border border-gray-700">
+        <input type="date" id="datum" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
         <div class="flex gap-2">
-            <input type="time" id="beginn" class="w-full bg-gray-800 p-3 rounded-lg" placeholder="Beginn">
-            <input type="time" id="ende" class="w-full bg-gray-800 p-3 rounded-lg" placeholder="Ende">
+            <input type="time" id="beginn" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700" placeholder="Beginn">
+            <input type="time" id="ende" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700" placeholder="Ende">
         </div>
-        <input type="text" id="kennzeichen" placeholder="Kennzeichen (EK...)" class="w-full bg-gray-800 p-3 rounded-lg">
-        <input type="number" id="km" placeholder="Gefahrene KM" class="w-full bg-gray-800 p-3 rounded-lg">
-        
-        <button onclick="sendData()" class="w-full bg-yellow-500 text-black font-bold p-4 rounded-lg">Speichern</button>
+        <input type="text" id="kennzeichen" placeholder="Kennzeichen" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
+        <input type="number" id="km" placeholder="KM gefahren" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
+        <button onclick="saveData()" class="w-full bg-yellow-500 text-black font-bold p-4 rounded-xl hover:bg-yellow-400 transition-all">Speichern</button>
+    </div>
+
+    <h2 class="text-sm font-bold text-gray-500 uppercase mb-3">Historie</h2>
+    <div id="list-container" class="space-y-2">
+        <p class="text-gray-600 italic">Lade Einträge...</p>
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwSBt949VLPJbFx1Dd728ycwRHyuhN_404ONagCGnP5yK2XtFD7MpsEOBpZLZfixi4MEw/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbySiYby3yUkQoF8R8MfF2s9lZr4hkLWXuq5nmAxJX1PqMsAm0VukDZcRorM0qmORtJw/exec";
 
-        // Setzt Datum automatisch auf heute
         document.getElementById('datum').valueAsDate = new Date();
 
-        async function sendData() {
+        async function loadEntries() {
+            let res = await fetch(WEB_APP_URL);
+            let data = await res.json();
+            const container = document.getElementById("list-container");
+            container.innerHTML = data.reverse().map(row => `
+                <div class="bg-gray-800 p-3 rounded-xl flex justify-between text-sm border border-gray-700">
+                    <span class="text-gray-400">${row.datum.split('T')[0]}</span>
+                    <span class="font-bold text-white">${row.kennzeichen}</span>
+                    <span class="text-yellow-500">${row.km} KM</span>
+                </div>
+            `).join('');
+        }
+
+        async function saveData() {
             const data = {
                 datum: document.getElementById('datum').value,
                 beginn: document.getElementById('beginn').value,
@@ -35,14 +51,12 @@
                 kennzeichen: document.getElementById('kennzeichen').value,
                 km: document.getElementById('km').value
             };
-
-            try {
-                await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
-                alert("Gespeichert!");
-            } catch (e) {
-                alert("Fehler!");
-            }
+            await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
+            alert("Erfolgreich gespeichert!");
+            loadEntries();
         }
+
+        loadEntries();
     </script>
 </body>
 </html>
