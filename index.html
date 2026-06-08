@@ -27,11 +27,8 @@
 
     <h2 class="text-sm font-bold text-gray-500 uppercase mb-3">Historie</h2>
     
-    <!-- Monats-Auswahl -->
     <select id="monats-filter" onchange="loadEntries()" class="w-full bg-gray-800 p-3 rounded-xl text-white mb-4 border border-gray-700 font-bold">
-        <option value="2026-05">Mai 2026</option>
-        <option value="2026-06">Juni 2026</option>
-        <option value="2026-07">Juli 2026</option>
+        <option value="">Lade Daten...</option>
     </select>
 
     <div id="list-container" class="space-y-2"></div>
@@ -39,13 +36,7 @@
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzdu1Ku2O0lX_9aidyWB5EfXK_nyUvd5WYAGQAlr0UoZK7c5xL0-S-nSKT1Ist14H198A/exec";
 
-        // Initialisierung
         document.getElementById('datum').valueAsDate = new Date();
-        
-        // Aktuellen Monat im Dropdown vorauswählen
-        const now = new Date();
-        const currentMonthString = now.getFullYear() + "-" + ("0" + (now.getMonth() + 1)).slice(-2);
-        document.getElementById('monats-filter').value = currentMonthString;
 
         function berechneStunden() {
             const b = document.getElementById('beginn').value;
@@ -64,8 +55,24 @@
             try {
                 let res = await fetch(WEB_APP_URL);
                 let data = await res.json();
-                const filterWert = document.getElementById("monats-filter").value;
+                
+                // 1. Alle verfügbaren Monate aus den Daten extrahieren
+                const monateSet = new Set(data.map(row => {
+                    const d = new Date(row.datum);
+                    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
+                }));
+                const monate = Array.from(monateSet).sort().reverse();
 
+                // 2. Dropdown füllen
+                const filterSelect = document.getElementById("monats-filter");
+                const currentSelection = filterSelect.value;
+                filterSelect.innerHTML = monate.map(m => `<option value="${m}">${m}</option>`).join('');
+                
+                // Auswahl beibehalten oder neuesten Monat wählen
+                filterSelect.value = currentSelection || monate[0];
+                const filterWert = filterSelect.value;
+
+                // 3. Liste nach Auswahl filtern
                 document.getElementById("list-container").innerHTML = data.reverse()
                     .filter(row => {
                         if (!row.datum) return false;
@@ -82,6 +89,7 @@
                     `).join('');
             } catch (e) {
                 console.error("Fehler beim Laden:", e);
+                document.getElementById("list-container").innerHTML = "<p class='text-center text-gray-500'>Keine Daten gefunden.</p>";
             }
         }
 
