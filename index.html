@@ -18,17 +18,18 @@
         <div id="stunden-anzeige" class="text-center font-bold text-yellow-500 py-3 text-2xl border-t border-b border-gray-700 my-2">0,0 Std.</div>
         <input type="text" id="kennzeichen" placeholder="Kennzeichen" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
         <input type="number" id="km" placeholder="KM gefahren" class="w-full bg-gray-900 p-3 rounded-xl border border-gray-700">
-        <button onclick="saveData()" class="w-full bg-yellow-500 text-black font-bold p-4 rounded-xl hover:bg-yellow-400 transition-all">Speichern</button>
+        <button id="save-btn" onclick="saveData()" class="w-full bg-yellow-500 text-black font-bold p-4 rounded-xl hover:bg-yellow-400 transition-all">Speichern</button>
     </div>
 
     <h2 class="text-sm font-bold text-gray-500 uppercase mb-3">Historie</h2>
-    <select id="monats-filter" onchange="loadEntries()" class="w-full bg-gray-800 p-3 rounded-xl text-white mb-4 border border-gray-700 font-bold">
-        <option value="">Lade Daten...</option>
-    </select>
+    <select id="monats-filter" onchange="loadEntries()" class="w-full bg-gray-800 p-3 rounded-xl text-white mb-2 border border-gray-700 font-bold"></select>
+    
+    <div id="gesamtstunden" class="text-sm text-gray-400 mb-4 px-2">Gesamt: 0 Std.</div>
+
     <div id="list-container" class="space-y-2"></div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxGPMuTNEaykS8_YJJtazpekFFLauCJpQ4Kq8-vxAvq70kQCR5w3kqulyk8fp60q45Jpg/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzdu1Ku2O0lX_9aidyWB5EfXK_nyUvd5WYAGQAlr0UoZK7c5xL0-S-nSKT1Ist14H198A/exec";
         document.getElementById('datum').valueAsDate = new Date();
 
         function berechneStunden() {
@@ -51,13 +52,24 @@
             
             filterSelect.innerHTML = monate.map(m => `<option value="${m}" ${m === filterWert ? 'selected' : ''}>${m}</option>`).join('');
 
-            document.getElementById("list-container").innerHTML = data.reverse()
-                .filter(r => r.datum.startsWith(filterWert))
+            // Filtere Daten
+            const filteredData = data.filter(r => r.datum.startsWith(filterWert));
+            
+            // Berechne Gesamtstunden
+            const summe = filteredData.reduce((acc, curr) => {
+                const std = parseFloat(curr.stunden.replace(',', '.'));
+                return acc + (isNaN(std) ? 0 : std);
+            }, 0);
+            document.getElementById("gesamtstunden").innerText = `Gesamt: ${summe.toFixed(1).replace('.', ',')} Std.`;
+
+            // Liste anzeigen inklusive Kennzeichen
+            document.getElementById("list-container").innerHTML = filteredData.reverse()
                 .map(r => {
                     const parts = r.datum.split('-');
                     return `
-                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between text-sm border border-gray-700">
-                        <span class="text-gray-400">${parts[2]}.${parts[1]}.${parts[0]}</span>
+                    <div class="bg-gray-800 p-3 rounded-xl flex justify-between items-center text-sm border border-gray-700">
+                        <span class="text-gray-400">${parts[2]}.${parts[1]}</span>
+                        <span class="font-bold bg-gray-900 px-2 py-1 rounded">${r.kennzeichen}</span>
                         <span class="font-bold">${r.stunden}</span>
                         <span class="text-yellow-500">${r.km} KM</span>
                     </div>`;
@@ -65,16 +77,17 @@
         }
 
         async function saveData() {
+            const btn = document.getElementById('save-btn');
+            btn.innerText = "Speichere...";
             const data = {
                 datum: document.getElementById('datum').value,
                 beginn: document.getElementById('beginn').value,
                 ende: document.getElementById('ende').value,
                 kennzeichen: document.getElementById('kennzeichen').value,
                 km: document.getElementById('km').value,
-                stunden: document.getElementById('stunden-anzeige').innerText
+                stunden: document.getElementById('stunden-anzeige').innerText.replace(' Std.', '')
             };
             await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
-            alert("Erfolgreich gespeichert!");
             btn.innerText = "Speichern";
             loadEntries();
         }
