@@ -42,7 +42,6 @@
             const b = document.getElementById('beginn').value;
             const e = document.getElementById('ende').value;
             const anzeige = document.getElementById('stunden-anzeige');
-            
             if (b && e) {
                 const diff = (new Date("1970-01-01T" + e + "Z") - new Date("1970-01-01T" + b + "Z")) / 3600000;
                 anzeige.innerText = (diff >= 0 ? diff.toFixed(1).replace('.', ',') : "0,0") + " Std.";
@@ -56,7 +55,8 @@
                 let res = await fetch(WEB_APP_URL);
                 let data = await res.json();
                 
-                const monateSet = new Set(data.map(row => row.datum ? row.datum.split('T')[0].substring(0, 7) : ""));
+                // Wir nutzen den Datums-String direkt aus dem Sheet
+                const monateSet = new Set(data.map(row => row.datum ? row.datum.substring(0, 7) : ""));
                 const monate = Array.from(monateSet).filter(m => m !== "").sort().reverse();
 
                 const filterSelect = document.getElementById("monats-filter");
@@ -68,16 +68,13 @@
 
                 document.getElementById("list-container").innerHTML = data.reverse()
                     .filter(row => row.datum && row.datum.startsWith(filterWert))
-                    .map(row => {
-                        const dStr = row.datum.split('T')[0].split('-');
-                        const dateFormated = dStr[2] + '.' + dStr[1] + '.' + dStr[0];
-                        return `
+                    .map(row => `
                         <div class="bg-gray-800 p-3 rounded-xl flex justify-between text-sm border border-gray-700">
-                            <span class="text-gray-400">${dateFormated}</span>
+                            <span class="text-gray-400">${row.datum}</span>
                             <span class="font-bold">${row.stunden || ''}</span>
                             <span class="text-yellow-500">${row.km} KM</span>
-                        </div>`;
-                    }).join('');
+                        </div>
+                    `).join('');
             } catch (e) {
                 console.error("Fehler beim Laden:", e);
             }
@@ -92,10 +89,8 @@
                 km: document.getElementById('km').value,
                 stunden: document.getElementById('stunden-anzeige').innerText
             };
-            
             const btn = event.target;
             btn.innerText = "Speichere...";
-            
             await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
             alert("Erfolgreich gespeichert!");
             btn.innerText = "Speichern";
