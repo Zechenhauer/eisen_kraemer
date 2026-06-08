@@ -56,11 +56,8 @@
                 let res = await fetch(WEB_APP_URL);
                 let data = await res.json();
                 
-                const monateSet = new Set(data.map(row => {
-                    const d = new Date(row.datum);
-                    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
-                }));
-                const monate = Array.from(monateSet).sort().reverse();
+                const monateSet = new Set(data.map(row => row.datum ? row.datum.split('T')[0].substring(0, 7) : ""));
+                const monate = Array.from(monateSet).filter(m => m !== "").sort().reverse();
 
                 const filterSelect = document.getElementById("monats-filter");
                 const currentSelection = filterSelect.value;
@@ -70,22 +67,19 @@
                 const filterWert = filterSelect.value;
 
                 document.getElementById("list-container").innerHTML = data.reverse()
-                    .filter(row => {
-                        if (!row.datum) return false;
-                        const d = new Date(row.datum);
-                        const monatString = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
-                        return monatString === filterWert;
-                    })
-                    .map(row => `
+                    .filter(row => row.datum && row.datum.startsWith(filterWert))
+                    .map(row => {
+                        const dStr = row.datum.split('T')[0].split('-');
+                        const dateFormated = dStr[2] + '.' + dStr[1] + '.' + dStr[0];
+                        return `
                         <div class="bg-gray-800 p-3 rounded-xl flex justify-between text-sm border border-gray-700">
-                            <span class="text-gray-400">${row.datum ? row.datum.split('T')[0].split('-').reverse().join('.') : ''}</span>
+                            <span class="text-gray-400">${dateFormated}</span>
                             <span class="font-bold">${row.stunden || ''}</span>
                             <span class="text-yellow-500">${row.km} KM</span>
-                        </div>
-                    `).join('');
+                        </div>`;
+                    }).join('');
             } catch (e) {
                 console.error("Fehler beim Laden:", e);
-                document.getElementById("list-container").innerHTML = "<p class='text-center text-gray-500'>Keine Daten gefunden.</p>";
             }
         }
 
@@ -103,7 +97,6 @@
             btn.innerText = "Speichere...";
             
             await fetch(WEB_APP_URL, { method: "POST", body: JSON.stringify(data) });
-            
             alert("Erfolgreich gespeichert!");
             btn.innerText = "Speichern";
             loadEntries();
