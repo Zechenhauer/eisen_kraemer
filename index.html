@@ -56,23 +56,19 @@
                 let res = await fetch(WEB_APP_URL);
                 let data = await res.json();
                 
-                // 1. Alle verfügbaren Monate aus den Daten extrahieren
                 const monateSet = new Set(data.map(row => {
                     const d = new Date(row.datum);
                     return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2);
                 }));
                 const monate = Array.from(monateSet).sort().reverse();
 
-                // 2. Dropdown füllen
                 const filterSelect = document.getElementById("monats-filter");
                 const currentSelection = filterSelect.value;
                 filterSelect.innerHTML = monate.map(m => `<option value="${m}">${m}</option>`).join('');
                 
-                // Auswahl beibehalten oder neuesten Monat wählen
                 filterSelect.value = currentSelection || monate[0];
                 const filterWert = filterSelect.value;
 
-                // 3. Liste nach Auswahl filtern
                 document.getElementById("list-container").innerHTML = data.reverse()
                     .filter(row => {
                         if (!row.datum) return false;
@@ -82,7 +78,7 @@
                     })
                     .map(row => `
                         <div class="bg-gray-800 p-3 rounded-xl flex justify-between text-sm border border-gray-700">
-                            <span class="text-gray-400">${row.datum ? row.datum.split('T')[0] : ''}</span>
+                            <span class="text-gray-400">${row.datum ? new Date(row.datum).toLocaleDateString('de-DE', {timeZone: 'UTC'}) : ''}</span>
                             <span class="font-bold">${row.stunden || ''}</span>
                             <span class="text-yellow-500">${row.km} KM</span>
                         </div>
